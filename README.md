@@ -1,4 +1,4 @@
-:center**Introduction**                    📖
+## Introduction                   📖
 
 _This README file contains descriptions for the binary_trees tasks._
 
