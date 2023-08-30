@@ -1,60 +1,57 @@
+#include <stdlib.h>
 #include "binary_trees.h"
 
+bst_t *inorder_successor(bst_t *node);
+bst_t *bst_remove(bst_t *root, int value);
+
 /**
- * bst_find_min - Finds the minimum value node in a BST.
- * @root: Pointer to the root node of the tree.
+ * bst_remove - Removes a node from a Binary Search Tree.
  *
- * Return: A pointer to the minimum value node.
- */
-bst_t *bst_find_min(bst_t *root)
-{
-	bst_t *current = root;
-
-	while (current && current->left)
-		current = current->left;
-
-	return (current);
-}
-
-/**
- * bst_remove - Removes a node from a Binary Search Tree (BST).
  * @root: Pointer to the root node of the tree where you will remove a node.
- * @value: The value to remove in the tree.
+ * @value: Value to remove in the tree.
  *
- * Return: A pointer to the new root node of the tree after removing the value.
+ * Return: Pointer to the new root node of the tree after removing the desired
+ * value, or NULL if value doesn't exist.
  */
 bst_t *bst_remove(bst_t *root, int value)
 {
-	if (root == NULL)
-		return (NULL);
+	bst_t *temp = NULL, *successor = NULL;
 
-	if (value < root->n)
+	if (!root)
+		return (NULL);
+	if (root->n > value)
 		root->left = bst_remove(root->left, value);
-	else if (value > root->n)
+	else if (root->n < value)
 		root->right = bst_remove(root->right, value);
 	else
 	{
-		if (root->left == NULL)
+		if (!root->left || !root->right)
 		{
-			bst_t *temp = root->right;
-
+			temp = root->left ? root->left : root->right;
+			if (temp)
+				temp->parent = root->parent;
 			free(root);
 			return (temp);
 		}
-		else if (root->right == NULL)
-		{
-			bst_t *temp = root->left;
-
-			free(root);
-			return (temp);
-		}
-
-		bst_t *temp = bst_find_min(root->right);
-
-		root->n = temp->n;
-
-		root->right = bst_remove(root->right, temp->n);
+		successor = inorder_successor(root->right);
+		root->n = successor->n;
+		root->right = bst_remove(root->right, successor->n);
 	}
-
 	return (root);
+}
+
+/**
+ * inorder_successor - Finds the inorder successor of a node.
+ *
+ * @node: Pointer to the node to find the successor of.
+ *
+ * Return: Pointer to the inorder successor node of the given node.
+ */
+bst_t *inorder_successor(bst_t *node)
+{
+	bst_t *current = node;
+
+	while (current->left)
+		current = current->left;
+	return (current);
 }

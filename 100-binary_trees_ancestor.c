@@ -1,39 +1,114 @@
 #include "binary_trees.h"
 
 /**
- * binary_trees_ancestor - Finds the lowest common ancestor of two nodes.
- * @first: Pointer to the first node.
- * @second: Pointer to the second node.
+ * create_queue_node - Creates a new queue node for level-order traversal.
+ * @node: The binary tree node to store in the queue node.
  *
- * Return: Pointer to the lowest common ancestor, or NULL if not found.
+ * Return: A pointer to the newly created queue node.
  */
-binary_tree_t *binary_trees_ancestor(const binary_tree_t *first,
-		const binary_tree_t *second)
+levelorder_queue_t *create_queue_node(binary_tree_t *node)
 {
-	if (first == NULL || second == NULL)
+	levelorder_queue_t *new_node;
+
+	new_node = malloc(sizeof(levelorder_queue_t));
+	if (new_node == NULL)
 		return (NULL);
 
-	/* Store the path from root to the first node */
-	binary_tree_t *path1[1024] = {NULL};
-	size_t depth1 = 0;
-	binary_tree_t *curr1 = (binary_tree_t *)first;
-		while (curr1 != NULL)
-	{
-		path1[depth1++] = curr1;
-		curr1 = curr1->parent;
-	}
+	new_node->node = node;
+	new_node->next = NULL;
 
-	/* Find the common ancestor with the second node */
-	binary_tree_t *curr2 = (binary_tree_t *)second;
-		while (curr2 != NULL)
+	return (new_node);
+}
+
+/**
+ * free_queue - Frees a queue used for level-order traversal.
+ * @head: A pointer to the head of the queue.
+ */
+void free_queue(levelorder_queue_t *head)
+{
+	levelorder_queue_t *temp;
+
+	while (head != NULL)
 	{
-		for (size_t i = 0; i < depth1; ++i)
+		temp = head->next;
+		free(head);
+		head = temp;
+	}
+}
+
+/**
+ * enqueue - Enqueues a binary tree node for level-order traversal.
+ * @node: The binary tree node to enqueue.
+ * @head: A pointer to the head of the queue.
+ * @tail: A pointer to the tail of the queue.
+ * @func: The function to apply to the node.
+ */
+void enqueue(binary_tree_t *node, levelorder_queue_t *head,
+		levelorder_queue_t **tail, void (*func)(int))
+{
+	levelorder_queue_t *new_node;
+
+	func(node->n);
+	if (node->left != NULL)
+	{
+		new_node = create_queue_node(node->left);
+		if (new_node == NULL)
 		{
-			if (curr2 == path1[i])
-				return (curr2);
+			free_queue(head);
+			exit(1);
 		}
-		curr2 = curr2->parent;
+		(*tail)->next = new_node;
+		*tail = new_node;
+	}
+	if (node->right != NULL)
+	{
+		new_node = create_queue_node(node->right);
+		if (new_node == NULL)
+		{
+			free_queue(head);
+			exit(1);
+		}
+		(*tail)->next = new_node;
+		*tail = new_node;
+	}
+}
+
+/**
+ * dequeue - Dequeues the front node from the queue.
+ * @head: A pointer to the head of the queue.
+ */
+void dequeue(levelorder_queue_t **head)
+{
+	levelorder_queue_t *temp;
+
+	temp = (*head)->next;
+	free(*head);
+	*head = temp;
+}
+
+/**
+ * binary_tree_levelorder_traversal - Performs level-order
+ * traversal on a binary tree.
+ * @tree: A pointer to the root node of the tree to traverse.
+ * @func: The function to apply to each node.
+ */
+void binary_tree_levelorder_traversal(const binary_tree_t *tree,
+void (*func)(int))
+{
+	levelorder_queue_t *queue_head, *queue_tail;
+
+	if (tree == NULL || func == NULL)
+		return;
+
+	queue_head = queue_tail = create_queue_node((binary_tree_t *)tree);
+	if (queue_head == NULL)
+		return;
+
+	while (queue_head != NULL)
+	{
+		enqueue(queue_head->node, queue_head, &queue_tail, func);
+		dequeue(&queue_head);
 	}
 
-	return (NULL); /* No common ancestor found */
+	free_queue(queue_head);
 }
